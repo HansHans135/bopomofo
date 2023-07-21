@@ -1,5 +1,4 @@
 import os
-import json
 import urllib.parse
 
 import discord
@@ -34,20 +33,22 @@ async def help(ctx: discord.ApplicationContext):
     await ctx.respond(embed=embed)
 
 
-async def translate(string: str) -> str | None:
-    string = string.replace(" ", "=")
-    url_string = urllib.parse.quote(string)
+async def translate(string: str, space_at_end: bool = False) -> str | None:
+    if space_at_end:
+        string += "="
+    url_string = urllib.parse.quote(string.replace(" ", "="))
     async with aiohttp.request(
         "GET",
         f"https://www.google.com/inputtools/request?text={url_string}&ime=zh-hant-t-i0&cb=?",  # noqa
     ) as response:
-        text = await response.text()
+        result = await response.json()
 
-    result_list = json.loads(text)[1][0][1]
-    if result_list:
-        return result_list[0]
+    if not result[1][0][1]:
+        return None
+    if result[1][0][3].get("matched_length") and not space_at_end:
+        return await translate(string, True)
 
-    return None
+    return result[1][0][1][0]
 
 
 @bot.message_command(name="精靈文翻譯")
@@ -57,11 +58,11 @@ async def translate_command(
 ):
     result = await translate(message.content)
     if not result:
-        return await ctx.respond("無法翻譯此訊息，請見諒", ephemeral=True)
+        return await ctx.respond("無法翻譯此訊息，可能是拼字有誤。", ephemeral=True)
 
     embed = discord.Embed(
         title="精靈文翻譯結果:",
-        description=f"```{message.content}```⬇️```{result}```",
+        description=f"From: {message.jump_url}\n{message.content}\n⬇️\n{result}",  # noqa
     )
     embed.set_author(
         name=message.author.name,
