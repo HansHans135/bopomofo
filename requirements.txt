@@ -1,0 +1,3 @@
+aiohttp
+python-dotenv
+py-cord >= 2.0.0
