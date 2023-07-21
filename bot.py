@@ -34,21 +34,31 @@ async def help(ctx: discord.ApplicationContext):
 
 
 async def translate(string: str, space_at_end: bool = False) -> str | None:
-    if space_at_end:
-        string += "="
-    url_string = urllib.parse.quote(string.replace(" ", "="))
+    if not string:
+        return None
+    url_string = urllib.parse.quote(
+        string.replace(" ", "=") + ("=" if space_at_end else "")
+    )
     async with aiohttp.request(
         "GET",
         f"https://www.google.com/inputtools/request?text={url_string}&ime=zh-hant-t-i0&cb=?",  # noqa
     ) as response:
-        result = await response.json()
+        result = (await response.json())[1][0]
+        jresult: dict = result[3]
 
-    if not result[1][0][1]:
-        return None
-    if result[1][0][3].get("matched_length") and not space_at_end:
-        return await translate(string, True)
+    if not result[1]:
+        return string
+    if jresult.get("matched_length"):
+        if not space_at_end:
+            return await translate(string, True)
 
-    return result[1][0][1][0]
+        result_ = await translate(
+            string[jresult["matched_length"][0]+1:],
+            True,
+        )
+        return result[1][0] + " " + (result_ or '')
+
+    return result[1][0]
 
 
 @bot.message_command(name="精靈文翻譯")
