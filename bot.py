@@ -66,7 +66,7 @@ async def translate_command(
     ctx: discord.ApplicationContext,
     message: discord.Message,
 ):
-    result = " ".join(filter(None, [await translate(substr) for substr in message.content.split("=")]))  # noqa
+    result = "=".join(filter(None, [await translate(substr) for substr in message.content.split("=")]))  # noqa
     if not result:
         return await ctx.respond("無法翻譯此訊息，可能是拼字有誤。", ephemeral=True)
 
