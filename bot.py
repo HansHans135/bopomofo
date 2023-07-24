@@ -48,15 +48,16 @@ async def translate(string: str, space_at_end: bool = False) -> str | None:
 
     if not result[1]:
         return string
+
     if jresult.get("matched_length"):
         if not space_at_end:
             return await translate(string, True)
 
         result_ = await translate(
-            string[jresult["matched_length"][0]+1:],
+            string[jresult["matched_length"][0]:],
             True,
         )
-        return result[1][0] + " " + (result_ or '')
+        return result[1][0] + " " + (result_ or "")
 
     return result[1][0]
 
