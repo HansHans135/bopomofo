@@ -37,7 +37,10 @@ async def translate(string: str, space_at_end: bool = False) -> str | None:
     if not string:
         return None
     url_string = urllib.parse.quote(
-        string.replace(" ", "=") + ("=" if space_at_end else "")
+        (
+            (" " + string[1:].replace(" ", "=")) if string[0] == " "
+            else string.replace(" ", "=")
+        ) + ("=" if space_at_end else "")
     )
     async with aiohttp.request(
         "GET",
@@ -45,8 +48,12 @@ async def translate(string: str, space_at_end: bool = False) -> str | None:
     ) as response:
         result = (await response.json())[1][0]
         jresult: dict = result[3]
+        print(result)
 
     if not result[1]:
+        if not space_at_end:
+            return await translate(string, True)
+
         return string
 
     if jresult.get("matched_length"):
@@ -57,7 +64,7 @@ async def translate(string: str, space_at_end: bool = False) -> str | None:
             string[jresult["matched_length"][0]:],
             True,
         )
-        return result[1][0] + " " + (result_ or "")
+        return result[1][0] + (result_ or "")
 
     return result[1][0]
 
