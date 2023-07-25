@@ -33,14 +33,14 @@ async def help(ctx: discord.ApplicationContext):
     await ctx.respond(embed=embed)
 
 
-async def translate(string: str, space_at_end: bool = False) -> str | None:
-    if not string:
+async def translate(string: str) -> (str | None):
+    if (not string) or string == "=":
         return None
     url_string = urllib.parse.quote(
         (
             (" " + string[1:].replace(" ", "=")) if string[0] == " "
             else string.replace(" ", "=")
-        ) + ("=" if space_at_end else "")
+        ) + "="
     )
     async with aiohttp.request(
         "GET",
@@ -48,23 +48,12 @@ async def translate(string: str, space_at_end: bool = False) -> str | None:
     ) as response:
         result = (await response.json())[1][0]
         jresult: dict = result[3]
-        print(result)
 
     if not result[1]:
-        if not space_at_end:
-            return await translate(string, True)
-
         return string
 
-    if jresult.get("matched_length"):
-        if not space_at_end:
-            return await translate(string, True)
-
-        result_ = await translate(
-            string[jresult["matched_length"][0]:],
-            True,
-        )
-        return result[1][0] + (result_ or "")
+    if match_len := jresult.get("matched_length"):
+        return result[1][0] + (await translate(string[match_len[0]:]) or "")
 
     return result[1][0]
 
