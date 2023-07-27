@@ -9,7 +9,7 @@ import discord
 from discord.ext import commands
 
 
-class Translate(commands.Cog):
+class TranslateCog(commands.Cog):
     """
     The cog class for the translate commands.
     """
@@ -18,7 +18,7 @@ class Translate(commands.Cog):
         self.client = client
         self.re_replace_space = re.compile(r" +")
 
-    def _replace_space(self, match: re.Match):
+    def _replace_space(self, match: re.Match) -> str:
         """
         Replace the first space in multiple consecutive spaces with "=".
         """
@@ -88,4 +88,4 @@ def setup(client: discord.AutoShardedBot) -> None:
     """
     The setup function of the cog.
     """
-    client.add_cog(Translate(client))
+    client.add_cog(TranslateCog(client))

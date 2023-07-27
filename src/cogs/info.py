@@ -6,7 +6,7 @@ import discord
 from discord.ext import commands
 
 
-class Info(commands.Cog):
+class InfoCog(commands.Cog):
     """
     The cog class for the informational commands.
     """
@@ -45,4 +45,4 @@ def setup(client: discord.AutoShardedBot) -> None:
     """
     The setup function of the cog.
     """
-    client.add_cog(Info(client))
+    client.add_cog(InfoCog(client))
