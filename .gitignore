@@ -235,4 +235,4 @@ fabric.properties
 *.pem
 
 # configuration files
-config.toml
+.sourcery.yaml
