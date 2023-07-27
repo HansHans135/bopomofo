@@ -67,7 +67,8 @@ class Translate(commands.Cog):
         )
 
         if not result:
-            return await ctx.respond("無法翻譯此訊息，可能是拼字有誤。")
+            await ctx.respond("無法翻譯此訊息，可能是拼字有誤。")
+            return
 
         embed = discord.Embed(
             title="精靈文翻譯結果:",
