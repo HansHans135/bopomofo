@@ -1,7 +1,7 @@
 """
 Cog module for the translate commands.
 """
-
+import re
 from urllib.parse import quote
 
 import aiohttp
@@ -16,6 +16,13 @@ class Translate(commands.Cog):
 
     def __init__(self, client: discord.AutoShardedBot) -> None:
         self.client = client
+        self.re_replace_space = re.compile(r" +")
+
+    def _replace_space(self, match: re.Match):
+        """
+        Replace the first space in multiple consecutive spaces with "=".
+        """
+        return f"={match.group(0)[1:]}"
 
     async def translate(self, string: str) -> str:
         """
@@ -30,10 +37,10 @@ class Translate(commands.Cog):
         if (not string) or string == "=":
             return ""
 
-        string = string.replace(" ", "=")
-        if string[0] == "=":
-            string = f" {string[1:]}"
-        text = quote(string)
+        string_ = re.sub(self.re_replace_space, self._replace_space, string)
+        if string[0] == " ":
+            string_ = f" {string_[1:]}"
+        text = quote(string_)
 
         async with aiohttp.ClientSession() as s:
             async with s.get(
@@ -45,7 +52,7 @@ class Translate(commands.Cog):
         if not result[1]:
             return string
         if match_len := result[3].get("matched_length"):
-            return result[1][0] + (await self.translate(string[match_len[0] :]) or "")
+            return f"{result[1][0]}{await self.translate(string[match_len[0]:]) or ''}"
         return result[1][0]
 
     @discord.message_command(name="精靈文翻譯")
