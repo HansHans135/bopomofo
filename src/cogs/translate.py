@@ -31,7 +31,7 @@ class Translate(commands.Cog):
             return ""
 
         string = string.replace(" ", "=")
-        if string.startswith("="):
+        if string[0] == "=":
             string = f" {string[1:]}"
         text = quote(string)
 
