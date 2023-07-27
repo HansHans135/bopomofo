@@ -11,5 +11,5 @@
     ```
 3. 執行 Bot
     ```py
-    python bot.py
+    python start.py
     ```
