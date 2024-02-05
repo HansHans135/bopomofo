@@ -54,7 +54,6 @@ def b_dict(msg):
     }
     for i in dict:
         msg = msg.replace(i, dict[i])
-        print(msg)
     return msg
 
 class TranslateCog(commands.Cog):
