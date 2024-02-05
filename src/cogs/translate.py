@@ -8,6 +8,54 @@ import aiohttp
 import discord
 from discord.ext import commands
 
+def b_dict(msg):
+    dict = {
+        "ㄅ": "1",
+        "ㄆ": "q",
+        "ㄇ": "a",
+        "ㄈ": "z",
+        "ㄉ": "2",
+        "ㄊ": "w",
+        "ㄋ": "s",
+        "ㄌ": "x",
+        "ㄍ": "e",
+        "ㄎ": "d",
+        "ㄏ": "c",
+        "ㄐ": "r",
+        "ㄑ": "f",
+        "ㄒ": "v",
+        "ㄓ": "5",
+        "ㄔ": "t",
+        "ㄕ": "g",
+        "ㄖ": "b",
+        "ㄗ": "y",
+        "ㄘ": "h",
+        "ㄙ": "n",
+        "ㄧ": "u",
+        "ㄨ": "j",
+        "ㄩ": "m",
+        "ㄚ": "8",
+        "ㄛ": "i",
+        "ㄜ": "k",
+        "ㄝ": ",",
+        "ㄞ": "9",
+        "ㄟ": "o",
+        "ㄠ": "l",
+        "ㄡ": ".",
+        "ㄢ": "0",
+        "ㄣ": "p",
+        "ㄤ": ";",
+        "ㄥ": "/",
+        "ㄦ": "-",
+        "ˇ": "3",
+        "ˋ": "4",
+        "ˊ": "6",
+        "˙": "7",
+    }
+    for i in dict:
+        msg = msg.replace(i, dict[i])
+        print(msg)
+    return msg
 
 class TranslateCog(commands.Cog):
     """
@@ -34,9 +82,10 @@ class TranslateCog(commands.Cog):
         :return: The translated string.
         :rtype: str
         """
+        string=b_dict(string)
         if (not string) or string == "=":
             return ""
-
+        
         string_ = re.sub(self.re_replace_space, self._replace_space, string)
         if string[0] == " ":
             string_ = f" {string_[1:]}"
@@ -80,7 +129,7 @@ class TranslateCog(commands.Cog):
         embed = discord.Embed(
             title="精靈文翻譯結果:",
             description=f"原始訊息位置: {message.jump_url}\n{message.content}\n⬇️\n{result}",
-        ).set_author(name=message.author.name, icon_url=message.author.avatar.url)
+        ).set_author(name=message.author.name, icon_url=message.author.display_avatar.url)
         await ctx.respond(embed=embed)
 
 
