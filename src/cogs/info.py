@@ -36,6 +36,7 @@ class InfoCog(commands.Cog):
             name="機器人原始碼",
             value="[GitHub](https://github.com/HansHans135/bopomofo/)",
         )
+        eb.add_field(name="相關連結",value="[支援群組](https://discord.gg/JayWx9RygN)．[邀請機器人](https://discord.com/application-directory/1126517167966396436)．[Discord TW](https://discordservers.tw/bots/1126517167966396436)",inline=False)
         eb.set_image(url="https://raw.githubusercontent.com/HansHans135/bopomofo/main/example.gif")
 
         await ctx.respond(embed=eb)

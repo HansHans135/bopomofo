@@ -236,3 +236,4 @@ fabric.properties
 
 # configuration files
 .sourcery.yaml
+db_test.py

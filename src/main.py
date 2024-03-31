@@ -14,7 +14,10 @@ class Bot(discord.AutoShardedBot):
 
     def __init__(self) -> None:
         self._client_ready = False
-        super().__init__(intents=discord.Intents.default())
+        intents=discord.Intents.default()
+        intents.message_content=True
+        intents.members=True
+        super().__init__(intents=intents)
         for k, v in self.load_extension("src.cogs", recursive=True, store=True).items():
             if v is True:
                 print(f"Loaded extension {k}")
@@ -70,6 +73,7 @@ Shards Count: {self.shard_count}
 Memory Usage: {tracemalloc.get_traced_memory()[0] / 1024 ** 2:.2f} MB
  API Latency: {self.latency * 1000:.2f} ms
 Guilds Count: {len(self.guilds)}
+Member Count: {len(self.users)}
 -------------------------"""
         )
 
