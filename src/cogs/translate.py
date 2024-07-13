@@ -1,6 +1,7 @@
 """
 Cog module for the translate commands.
 """
+
 import re
 import sqlite3
 from urllib.parse import quote
@@ -9,53 +10,54 @@ import aiohttp
 import discord
 from discord.ext import commands
 
+BOPOMOFO = {
+    "ㄅ": "1",
+    "ㄆ": "q",
+    "ㄇ": "a",
+    "ㄈ": "z",
+    "ㄉ": "2",
+    "ㄊ": "w",
+    "ㄋ": "s",
+    "ㄌ": "x",
+    "ㄍ": "e",
+    "ㄎ": "d",
+    "ㄏ": "c",
+    "ㄐ": "r",
+    "ㄑ": "f",
+    "ㄒ": "v",
+    "ㄓ": "5",
+    "ㄔ": "t",
+    "ㄕ": "g",
+    "ㄖ": "b",
+    "ㄗ": "y",
+    "ㄘ": "h",
+    "ㄙ": "n",
+    "ㄧ": "u",
+    "ㄨ": "j",
+    "ㄩ": "m",
+    "ㄚ": "8",
+    "ㄛ": "i",
+    "ㄜ": "k",
+    "ㄝ": ",",
+    "ㄞ": "9",
+    "ㄟ": "o",
+    "ㄠ": "l",
+    "ㄡ": ".",
+    "ㄢ": "0",
+    "ㄣ": "p",
+    "ㄤ": ";",
+    "ㄥ": "/",
+    "ㄦ": "-",
+    "ˇ": "3",
+    "ˋ": "4",
+    "ˊ": "6",
+    "˙": "7",
+}
 
-def b_dict(msg):
-    dict = {
-        "ㄅ": "1",
-        "ㄆ": "q",
-        "ㄇ": "a",
-        "ㄈ": "z",
-        "ㄉ": "2",
-        "ㄊ": "w",
-        "ㄋ": "s",
-        "ㄌ": "x",
-        "ㄍ": "e",
-        "ㄎ": "d",
-        "ㄏ": "c",
-        "ㄐ": "r",
-        "ㄑ": "f",
-        "ㄒ": "v",
-        "ㄓ": "5",
-        "ㄔ": "t",
-        "ㄕ": "g",
-        "ㄖ": "b",
-        "ㄗ": "y",
-        "ㄘ": "h",
-        "ㄙ": "n",
-        "ㄧ": "u",
-        "ㄨ": "j",
-        "ㄩ": "m",
-        "ㄚ": "8",
-        "ㄛ": "i",
-        "ㄜ": "k",
-        "ㄝ": ",",
-        "ㄞ": "9",
-        "ㄟ": "o",
-        "ㄠ": "l",
-        "ㄡ": ".",
-        "ㄢ": "0",
-        "ㄣ": "p",
-        "ㄤ": ";",
-        "ㄥ": "/",
-        "ㄦ": "-",
-        "ˇ": "3",
-        "ˋ": "4",
-        "ˊ": "6",
-        "˙": "7",
-    }
-    for i in dict:
-        msg = msg.replace(i, dict[i])
+
+def bopomofo_to_eng(msg: str):
+    for k, v in BOPOMOFO.items():
+        msg = msg.replace(k, v)
     return msg
 
 
@@ -84,7 +86,7 @@ class TranslateCog(commands.Cog):
         :return: The translated string.
         :rtype: str
         """
-        string = b_dict(string)
+        string = bopomofo_to_eng(string)
         if (not string) or string == "=":
             return ""
 
@@ -122,7 +124,7 @@ class TranslateCog(commands.Cog):
         await ctx.defer()
 
         result = "=".join(
-            filter(None, [await self.translate(substr) for substr in message.content.split("=")])
+            filter(None, (await self.translate(substr) for substr in message.content.split("=")))
         )
 
         if not result:
@@ -134,6 +136,9 @@ class TranslateCog(commands.Cog):
             description=f"原始訊息位置: {message.jump_url}\n{message.content}\n⬇️\n{result}",
         ).set_author(name=message.author.name, icon_url=message.author.display_avatar.url)
 
+        await ctx.respond(embed=embed)
+        return
+        # TODO: transalte data db
         with sqlite3.connect("data.db") as db:
             db_date = db.execute("SELECT * FROM translate")
             data = {}
@@ -147,13 +152,12 @@ class TranslateCog(commands.Cog):
         """
                 )
 
-        await ctx.respond(embed=embed)
-
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
+        return
         if message.author == self.client.user:
             return
-        return
+        # TODO: transalte data db
         with sqlite3.connect("data.db") as db:
             db_date = db.execute("SELECT * FROM translate")
         data = {}

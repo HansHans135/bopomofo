@@ -17,7 +17,6 @@ class Bot(discord.AutoShardedBot):
         intents = discord.Intents.default()
         intents.message_content = True
         intents.members = True
-        intents
         super().__init__(intents=intents)
         for k, v in self.load_extension("src.cogs", recursive=True, store=True).items():
             if v is True:
