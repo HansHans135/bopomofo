@@ -2,12 +2,12 @@
 Cog module for the translate commands.
 """
 import re
+import sqlite3
 from urllib.parse import quote
 
 import aiohttp
 import discord
 from discord.ext import commands
-import sqlite3
 
 
 def b_dict(msg):
@@ -95,7 +95,7 @@ class TranslateCog(commands.Cog):
 
         async with aiohttp.ClientSession() as s:
             async with s.get(
-                    f"https://www.google.com/inputtools/request?text={text}=&ime=zh-hant-t-i0&cb=?"
+                f"https://www.google.com/inputtools/request?text={text}=&ime=zh-hant-t-i0&cb=?"
             ) as r:
                 data = await r.json()
                 result = data[1][0]
@@ -106,9 +106,11 @@ class TranslateCog(commands.Cog):
             return f"{result[1][0]}{await self.translate(string[match_len[0]:]) or ''}"
         return result[1][0]
 
-    @discord.message_command(name="精靈文翻譯",integration_types={discord.IntegrationType.guild_install,discord.IntegrationType.user_install})
-    async def translate_command(self, ctx: discord.ApplicationContext,
-                                message: discord.Message) -> None:
+    @discord.message_command(
+        name="精靈文翻譯",
+        integration_types={discord.IntegrationType.guild_install, discord.IntegrationType.user_install},
+    )
+    async def translate_command(self, ctx: discord.ApplicationContext, message: discord.Message) -> None:
         """
         The message command to translate the message to Chinese.
 
@@ -120,10 +122,8 @@ class TranslateCog(commands.Cog):
         await ctx.defer()
 
         result = "=".join(
-            filter(None, [
-                await self.translate(substr)
-                for substr in message.content.split("=")
-            ]))
+            filter(None, [await self.translate(substr) for substr in message.content.split("=")])
+        )
 
         if not result:
             await ctx.respond("無法翻譯此訊息，可能是拼字有誤。")
@@ -131,24 +131,23 @@ class TranslateCog(commands.Cog):
 
         embed = discord.Embed(
             title="精靈文翻譯結果:",
-            description=
-            f"原始訊息位置: {message.jump_url}\n{message.content}\n⬇️\n{result}",
-        ).set_author(name=message.author.name,
-                     icon_url=message.author.display_avatar.url)
+            description=f"原始訊息位置: {message.jump_url}\n{message.content}\n⬇️\n{result}",
+        ).set_author(name=message.author.name, icon_url=message.author.display_avatar.url)
 
         with sqlite3.connect("data.db") as db:
-            db_date=db.execute("SELECT * FROM translate")
-            data={}
-            for (befor,after) in db_date.fetchall():
-                data[befor]=after
+            db_date = db.execute("SELECT * FROM translate")
+            data = {}
+            for befor, after in db_date.fetchall():
+                data[befor] = after
             if message.content not in data:
-                db.execute(f"""
+                db.execute(
+                    f"""
     INSERT INTO translate VALUES
         ('{message.content}','{result}')
-        """)
+        """
+                )
 
         await ctx.respond(embed=embed)
-
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -156,14 +155,12 @@ class TranslateCog(commands.Cog):
             return
         return
         with sqlite3.connect("data.db") as db:
-            db_date=db.execute("SELECT * FROM translate")
-        data={}
-        for (befor,after) in db_date.fetchall():
-            data[befor]=after
+            db_date = db.execute("SELECT * FROM translate")
+        data = {}
+        for befor, after in db_date.fetchall():
+            data[befor] = after
         if message.content in data:
             await message.channel.send(f"你是不是想說:`{data[message.content]}`")
-
-
 
 
 def setup(client: discord.AutoShardedBot) -> None:

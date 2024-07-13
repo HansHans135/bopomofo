@@ -16,7 +16,7 @@ class Bot(discord.AutoShardedBot):
         self._client_ready = False
         intents = discord.Intents.default()
         intents.message_content = True
-        intents.members=True
+        intents.members = True
         intents
         super().__init__(intents=intents)
         for k, v in self.load_extension("src.cogs", recursive=True, store=True).items():
@@ -75,7 +75,8 @@ Memory Usage: {tracemalloc.get_traced_memory()[0] / 1024 ** 2:.2f} MB
  API Latency: {self.latency * 1000:.2f} ms
 Guilds Count: {len(self.guilds)}
 -------------------------
-""")
+"""
+        )
 
     async def on_ready(self) -> None:
         """
