@@ -106,7 +106,7 @@ class TranslateCog(commands.Cog):
             return f"{result[1][0]}{await self.translate(string[match_len[0]:]) or ''}"
         return result[1][0]
 
-    @discord.message_command(name="精靈文翻譯")
+    @discord.message_command(name="精靈文翻譯",integration_types={discord.IntegrationType.guild_install,discord.IntegrationType.user_install})
     async def translate_command(self, ctx: discord.ApplicationContext,
                                 message: discord.Message) -> None:
         """
@@ -141,9 +141,7 @@ class TranslateCog(commands.Cog):
             data={}
             for (befor,after) in db_date.fetchall():
                 data[befor]=after
-            try:
-                data[message.content]
-            except:
+            if message.content not in data:
                 db.execute(f"""
     INSERT INTO translate VALUES
         ('{message.content}','{result}')
@@ -151,19 +149,21 @@ class TranslateCog(commands.Cog):
 
         await ctx.respond(embed=embed)
 
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.author == self.client.user:
             return
+        return
         with sqlite3.connect("data.db") as db:
             db_date=db.execute("SELECT * FROM translate")
         data={}
         for (befor,after) in db_date.fetchall():
             data[befor]=after
-        try:
+        if message.content in data:
             await message.channel.send(f"你是不是想說:`{data[message.content]}`")
-        except:
-            pass
+
+
 
 
 def setup(client: discord.AutoShardedBot) -> None:

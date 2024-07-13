@@ -237,3 +237,7 @@ fabric.properties
 # configuration files
 .sourcery.yaml
 db_test.py
+src/cogs/owner.py
+data.db
+data.db
+a.py

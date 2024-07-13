@@ -1,7 +1,7 @@
 """
 Cog module for the informational commands.
 """
-
+import sqlite3
 import discord
 from discord.ext import commands
 
@@ -24,6 +24,12 @@ class InfoCog(commands.Cog):
         """
         await ctx.defer()
 
+        with sqlite3.connect("data.db") as db:
+            db_date=db.execute("SELECT * FROM translate")
+        times=0
+        for (befor,after) in db_date.fetchall():
+            times+=1
+
         eb = discord.Embed(
             title="如何使用",
             description="""
@@ -39,7 +45,11 @@ class InfoCog(commands.Cog):
         eb.add_field(name="相關連結",value="[支援群組](https://discord.gg/JayWx9RygN)．[邀請機器人](https://discord.com/application-directory/1126517167966396436)．[Discord TW](https://discordservers.tw/bots/1126517167966396436)",inline=False)
         eb.set_image(url="https://raw.githubusercontent.com/HansHans135/bopomofo/main/example.gif")
 
-        await ctx.respond(embed=eb)
+        eb2=discord.Embed(title="一些酷酷的資料")
+        eb2.add_field(name="群組數量",value=f"{len(self.client.guilds)}",inline=False)
+        eb2.add_field(name="用戶數量", value=f"{len(self.client.users)}",inline=False)
+        eb2.add_field(name="翻譯數量", value=f"{times}", inline=False)
+        await ctx.respond(embeds=[eb,eb2])
 
 
 def setup(client: discord.AutoShardedBot) -> None:
