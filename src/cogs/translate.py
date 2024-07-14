@@ -135,6 +135,7 @@ class TranslateCog(commands.Cog):
         embed = discord.Embed(
             title="精靈文翻譯",
             description=result,
+            color=0x2B2D31,
             timestamp=message.created_at,
         )
         embed.set_author(name=message.author.name, icon_url=message.author.display_avatar.url)
