@@ -8,6 +8,7 @@ from urllib.parse import quote
 
 import aiohttp
 import discord
+import discord.ui as UI
 from discord.ext import commands
 
 BOPOMOFO = {
@@ -124,7 +125,7 @@ class TranslateCog(commands.Cog):
         await ctx.defer()
 
         result = "=".join(
-            filter(None, (await self.translate(substr) for substr in message.content.split("=")))
+            filter(None, [await self.translate(substr) for substr in message.content.split("=")])
         )
 
         if not result:
@@ -132,11 +133,14 @@ class TranslateCog(commands.Cog):
             return
 
         embed = discord.Embed(
-            title="精靈文翻譯結果:",
-            description=f"原始訊息位置: {message.jump_url}\n{message.content}\n⬇️\n{result}",
-        ).set_author(name=message.author.name, icon_url=message.author.display_avatar.url)
+            title="精靈文翻譯",
+            description=result,
+            timestamp=message.created_at,
+        )
+        embed.set_author(name=message.author.name, icon_url=message.author.display_avatar.url)
+        embed.set_footer(text=message.channel.name)
 
-        await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed, view=UI.View(UI.Button(label="跳至原始訊息", url=message.jump_url)))
         return
         # TODO: transalte data db
         with sqlite3.connect("data.db") as db:
