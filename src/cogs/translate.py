@@ -142,7 +142,7 @@ class TranslateCog(commands.Cog):
         embed.set_footer(text=message.channel.name)
 
         await ctx.respond(embed=embed, view=UI.View(UI.Button(label="跳至原始訊息", url=message.jump_url)))
-        return
+
         # TODO: transalte data db
         with sqlite3.connect("data.db") as db:
             db_date = db.execute("SELECT * FROM translate")
@@ -152,9 +152,9 @@ class TranslateCog(commands.Cog):
             if message.content not in data:
                 db.execute(
                     f"""
-    INSERT INTO translate VALUES
-        ('{message.content}','{result}')
-        """
+                        INSERT INTO translate VALUES
+                        ('{message.content}','{result}')
+                    """
                 )
 
     @commands.Cog.listener()
