@@ -3,13 +3,13 @@ Cog module for the translate commands.
 """
 
 import re
-import sqlite3
 from urllib.parse import quote
 
 import aiohttp
 import discord
 import discord.ui as UI
-from discord.ext import commands
+
+from ..main import BaseCog
 
 BOPOMOFO = {
     "ㄅ": "1",
@@ -62,14 +62,12 @@ def bopomofo_to_eng(msg: str):
     return msg
 
 
-class TranslateCog(commands.Cog):
+class TranslateCog(BaseCog):
     """
     The cog class for the translate commands.
     """
 
-    def __init__(self, client: discord.AutoShardedBot) -> None:
-        self.client = client
-        self.re_replace_space = re.compile(r" +")
+    re_replace_space = re.compile(r" +")
 
     def _replace_space(self, match: re.Match) -> str:
         """
@@ -124,9 +122,13 @@ class TranslateCog(commands.Cog):
         """
         await ctx.defer()
 
-        result = "=".join(
-            filter(None, [await self.translate(substr) for substr in message.content.split("=")])
-        )
+        # get cache from local datebase
+        result = await self.db.get_translate(message.content)
+        if result is None:
+            # fetch result from google API
+            result = "=".join(
+                filter(None, [await self.translate(substr) for substr in message.content.split("=")])
+            )
 
         if not result:
             await ctx.respond("無法翻譯此訊息，可能是拼字有誤。")
@@ -143,33 +145,19 @@ class TranslateCog(commands.Cog):
 
         await ctx.respond(embed=embed, view=UI.View(UI.Button(label="跳至原始訊息", url=message.jump_url)))
 
-        # TODO: transalte data db
-        with sqlite3.connect("data.db") as db:
-            db_date = db.execute("SELECT * FROM translate")
-            data = {}
-            for befor, after in db_date.fetchall():
-                data[befor] = after
-            if message.content not in data:
-                db.execute(
-                    f"""
-                        INSERT INTO translate VALUES
-                        ('{message.content}','{result}')
-                    """
-                )
+        await self.db.insert_translate(message.content, result)
 
-    @commands.Cog.listener()
+    @discord.Cog.listener()
     async def on_message(self, message: discord.Message):
-        return
-        if message.author == self.client.user:
+        if message.author == self.bot.user:
             return
-        # TODO: transalte data db
-        with sqlite3.connect("data.db") as db:
-            db_date = db.execute("SELECT * FROM translate")
-        data = {}
-        for befor, after in db_date.fetchall():
-            data[befor] = after
-        if message.content in data:
-            await message.channel.send(f"你是不是想說:`{data[message.content]}`")
+
+        guess = await self.db.get_translate(message.content)
+        if guess is None:
+            return
+        embed = discord.Embed(title="你是不是想說：", description=guess, color=0x2B2D31)
+        embed.set_author(name="精靈文翻譯系統")
+        await message.reply(embed=embed, mention_author=False, view=DeleteMessageUI(message))
 
 
 def setup(client: discord.AutoShardedBot) -> None:
@@ -177,3 +165,24 @@ def setup(client: discord.AutoShardedBot) -> None:
     The setup function of the cog.
     """
     client.add_cog(TranslateCog(client))
+
+
+class DeleteMessageUI(UI.View):
+    def __init__(self, message: discord.Message):
+        super().__init__(timeout=60)
+        self.orignial_message = message
+
+    @UI.button(label="不，我並沒有這個意思", custom_id="button:delete_message", style=discord.ButtonStyle.red)
+    async def delete_message(self, _: UI.Button, interaction: discord.Interaction):
+        if interaction.user != self.orignial_message.author:
+            await interaction.respond("你不能使用這顆按鈕。", ephemeral=True)
+            return
+        await interaction.message.delete()
+        self.stop()
+
+    # TODO: report systme
+    # @UI.button(label="回報問題", custom_id="button:report")
+    # async def report(self, _: UI.Button, interaction: discord.Interaction): ...
+
+    async def on_timeout(self) -> None:
+        await self.message.edit(view=None)

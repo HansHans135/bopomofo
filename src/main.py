@@ -5,6 +5,7 @@ The main module of the bot.
 import tracemalloc
 
 import discord
+from discord.ext import commands
 
 from .database import Database
 
@@ -105,3 +106,16 @@ Guilds Count: {len(self.guilds)}
         print("Starting the bot...")
         self.loop.create_task(self.database.initialize())
         super().run(token)
+
+
+class BaseCog(commands.Cog):
+    """
+    The base cog class.
+    """
+
+    def __init__(self, bot: Bot) -> None:
+        self.bot = bot
+
+    @property
+    def db(self):
+        return self.bot.database
