@@ -27,10 +27,10 @@ class InfoCog(BaseCog):
                 "你會認為他是忘記切輸入法吧？\n"
                 "現在，透過機器人直接翻譯對話吧！\n\n"
                 # urls
+                "[邀請機器人](https://discord.com/application-directory/1126517167966396436)．"
                 "[GitHub](https://github.com/HansHans135/bopomofo/)．"
                 "[Discord](https://discord.gg/JayWx9RygN)．"
-                "[邀請機器人](https://discord.com/application-directory/1126517167966396436)．"
-                "[Discord TW](https://discordservers.tw/bots/1126517167966396436)"
+                "[DiscordTW](https://discordservers.tw/bots/1126517167966396436)"
             ),
             image="https://raw.githubusercontent.com/HansHans135/bopomofo/main/example.gif",
         )
@@ -49,9 +49,9 @@ class InfoCog(BaseCog):
             title="機器人資訊",
             description=(
                 # fmt: off
-                f"　群組數量：{len(self.bot.guilds):,}\n"
+                f"群組　數量：{len(self.bot.guilds):,}\n"
                 f"使用者數量：{len(self.bot.users):,}\n"
-                f"總翻譯數量：{int(times):,}"
+                f"翻譯　數量：{int(times):,}"
                 # fmt: on
             ),
         )
