@@ -6,6 +6,8 @@ import tracemalloc
 
 import discord
 
+from .database import Database
+
 
 class Bot(discord.AutoShardedBot):
     """
@@ -13,11 +15,14 @@ class Bot(discord.AutoShardedBot):
     """
 
     def __init__(self) -> None:
+        self.database = Database("storage/database.db")
+
         self._client_ready = False
         intents = discord.Intents.default()
         intents.message_content = True
         intents.members = True
         super().__init__(intents=intents)
+
         for k, v in self.load_extension("src.cogs", recursive=True, store=True).items():
             if v is True:
                 print(f"Loaded extension {k}")
@@ -98,4 +103,5 @@ Guilds Count: {len(self.guilds)}
         Starts the bot.
         """
         print("Starting the bot...")
+        self.loop.create_task(self.database.initialize())
         super().run(token)
