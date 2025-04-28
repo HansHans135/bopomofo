@@ -141,7 +141,8 @@ class TranslateCog(BaseCog):
             timestamp=message.created_at,
         )
         embed.set_author(name=message.author.name, icon_url=message.author.display_avatar.url)
-        embed.set_footer(text=message.channel.name)
+        if message.guild:
+            embed.set_footer(text=message.channel.name)
 
         await ctx.respond(embed=embed, view=UI.View(UI.Button(label="跳至原始訊息", url=message.jump_url)))
 
