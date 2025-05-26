@@ -156,6 +156,11 @@ class TranslateCog(BaseCog):
         guess = await self.db.get_translate(message.content)
         if guess is None:
             return
+            
+        count = await self.db.get_translate_count(message.content)
+        if count is None or count < 3:
+            return
+            
         embed = discord.Embed(title="你是不是想說：", description=guess, color=0x2B2D31)
         embed.set_author(name="精靈文翻譯系統")
         await message.reply(embed=embed, mention_author=False, view=DeleteMessageUI(message))

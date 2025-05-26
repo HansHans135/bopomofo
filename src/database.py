@@ -85,3 +85,17 @@ class Database:
             cursor = await db.execute("SELECT translated FROM translate WHERE original = ?", (original,))
             result = await cursor.fetchone()
             return result[0] if result else None
+
+    async def get_translate_count(self, original: str) -> int:
+        """
+        Gets the count of a specific translation from the database.
+        
+        :param original: The original text to look up
+        :type original: str
+        :return: The count of times this text has been translated, or None if not found
+        :rtype: int or None
+        """
+        async with aiosqlite.connect(self.path) as db:
+            cursor = await db.execute("SELECT count FROM translate WHERE original = ?", (original,))
+            result = await cursor.fetchone()
+            return result[0] if result else None
