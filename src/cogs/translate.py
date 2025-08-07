@@ -158,12 +158,45 @@ class TranslateCog(BaseCog):
             return
             
         count = await self.db.get_translate_count(message.content)
-        if count is None or count < 3:
+        if count is None or count < 10:
             return
             
         embed = discord.Embed(title="你是不是想說：", description=guess, color=0x2B2D31)
         embed.set_author(name="精靈文翻譯系統")
         await message.reply(embed=embed, mention_author=False, view=DeleteMessageUI(message))
+
+    @discord.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if message.author == self.bot.user:
+            return
+
+        if not isinstance(message.channel, discord.DMChannel):
+            return
+        
+        result = await self.db.get_translate(message.content)
+        if result is None:
+            # fetch result from google API
+            result = "=".join(
+                filter(None, [await self.translate(substr) for substr in message.content.split("=")])
+            )
+
+        if not result:
+            await message.reply("無法翻譯此訊息，可能是拼字有誤。")
+            return
+
+        embed = discord.Embed(
+            title="精靈文翻譯",
+            description=result,
+            color=0x2B2D31,
+            timestamp=message.created_at,
+        )
+        embed.set_author(name=message.author.name, icon_url=message.author.display_avatar.url)
+        if message.guild:
+            embed.set_footer(text=message.author.name)
+
+        await message.reply(embed=embed, view=UI.View(UI.Button(label="跳至原始訊息", url=message.jump_url)))
+
+        await self.db.insert_translate(message.content, result)
 
 
 def setup(client: discord.AutoShardedBot) -> None:
