@@ -18,3 +18,6 @@
     ```py
     python start.py
     ```
+
+## 特別感謝
+新系統改用 gallen881 的 [bopomofo2hanzi](https://github.com/gallen881/bopomofo2hanzi)
