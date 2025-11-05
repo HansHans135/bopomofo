@@ -150,8 +150,13 @@ class TranslateCog(BaseCog):
         if message.author == self.bot.user:
             return
 
-        if isinstance(message.channel, discord.DMChannel):
-            # dm translate
+        if isinstance(message.channel, discord.DMChannel) or self.bot.user in message.mentions:
+            # dm translate or mention translate
+            original_message = message
+            if self.bot.user in message.mentions:
+                message = message.reference.resolved
+                if not isinstance(message, discord.Message):
+                    return
 
             result = await self.db.get_translate(message.content)
             if result is None:
@@ -174,7 +179,7 @@ class TranslateCog(BaseCog):
             if message.guild:
                 embed.set_footer(text=message.author.name)
 
-            await message.reply(
+            await original_message.reply(
                 embed=embed,
                 view=UI.View(UI.Button(label="跳至原始訊息", url=message.jump_url)),
             )
