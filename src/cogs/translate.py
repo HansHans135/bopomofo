@@ -93,7 +93,7 @@ class TranslateCog(BaseCog):
         string = bopomofo_to_eng(string)
 
         prob, result = await decode_sentence(string, model)
-        return result
+        return "".join(result)
 
     @discord.message_command(
         name="精靈文翻譯",
