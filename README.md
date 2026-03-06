@@ -4,6 +4,14 @@
 
 ![gif](https://raw.githubusercontent.com/HansHans135/bopomofo/main/example.gif)
 
+
+## 支援翻譯方式
+- Google
+- Local model
+- OpenAI API
+
+除了 AI 需手動選擇翻譯，其餘方式會全部嘗試後輸出最高信心分者
+
 ## Bot 啟用步驟
 
 1. 將`.env.example`重新命名成`.env`，並依照裡面的格式將你的機器人 token 填入正確位置
