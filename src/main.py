@@ -73,13 +73,13 @@ class Bot(discord.AutoShardedBot):
         """
         print(
             f"""
--------------------------
+------------------------------
 Logged in as: {self.user.name}#{self.user.discriminator} ({self.user.id})
 Shards Count: {self.shard_count}
 Memory Usage: {tracemalloc.get_traced_memory()[0] / 1024 ** 2:.2f} MB
  API Latency: {self.latency * 1000:.2f} ms
 Guilds Count: {len(self.guilds)}
--------------------------
+------------------------------
 """
         )
 

@@ -9,6 +9,7 @@ from urllib.parse import quote
 from src.translate import decode_sentence
 from openai import AsyncOpenAI
 
+import aiohttp
 import httpx
 import discord
 import discord.ui as UI
@@ -71,6 +72,48 @@ def bopomofo_to_eng(msg: str):
     return msg
 
 
+_BOPOMOFO_QWERTY = frozenset(BOPOMOFO.values())
+
+
+def confidence_score(text: str) -> int:
+    """
+    Calculate the confidence score of a translated text.
+
+    Starting from 100, each QWERTY bopomofo key character (see BOPOMOFO)
+    found in the text deducts 1 point. The minimum score is 0.
+
+    :param text: The translated text to evaluate.
+    :type text: str
+
+    :return: The confidence score (0 ~ 100).
+    :rtype: int
+    """
+    count = sum(1 for ch in text if ch in _BOPOMOFO_QWERTY)
+    return max(0, 100 - count)
+
+
+def best_translation(candidates: list[tuple[str, str]]) -> tuple[str, str]:
+    """
+    Return the candidate with the highest confidence score and print all scores.
+
+    :param candidates: A list of (source, text) pairs,
+                       e.g. [("google", "你好"), ("local", "你cl3")].
+    :type candidates: list[tuple[str, str]]
+
+    :return: The (text, source) pair with the highest confidence score.
+    :rtype: tuple[str, str]
+    """
+    scored = [(source, text, confidence_score(text)) for source, text in candidates]
+    print("-"*30)
+    for source, text, score in scored:
+        print(f"[{source}] \"{text}\" confidence: {score}")
+
+    best = max(scored, key=lambda x: x[2])
+    print(f"-> best: [{best[0]}] \"{best[1]}\" confidence: {best[2]}")
+    print("-"*30)
+    return (best[1], best[0])
+
+
 class TranslateCog(BaseCog):
     """
     The cog class for the translate commands.
@@ -84,9 +127,42 @@ class TranslateCog(BaseCog):
         """
         return f"={match.group(0)[1:]}"
 
-    async def translate(self, string: str) -> str:
+    async def google_translate(self, string: str) -> str:
         """
-        Translate the bopomofo string to Chinese.
+        Use Google translate the bopomofo string to Chinese.
+
+        :param string: The bopomofo string.
+        :type string: str
+
+        :return: The translated string.
+        :rtype: str
+        """
+        string = bopomofo_to_eng(string)
+        if (not string) or string == "=":
+            return ""
+
+        string_ = re.sub(self.re_replace_space, self._replace_space, string)
+        if string[0] == " ":
+            string_ = f" {string_[1:]}"
+        text = quote(string_)
+
+        async with aiohttp.ClientSession() as s:
+            async with s.get(
+                f"https://www.google.com/inputtools/request?text={text}=&ime=zh-hant-t-i0&cb=?"
+            ) as r:
+                data = await r.json()
+                result = data[1][0]
+
+        if not result[1]:
+            return string
+        if match_len := result[3].get("matched_length"):
+            tail, _ = await self.translate(string[match_len[0]:])
+            return f"{result[1][0]}{tail}"
+        return result[1][0]
+    
+    async def local_translate(self, string: str) -> str:
+        """
+        local translate the bopomofo string to Chinese.
 
         :param string: The bopomofo string.
         :type string: str
@@ -149,6 +225,21 @@ IMPORTANT SAFETY INSTRUCTIONS:
                 print(f"An error occurred: {e}")
 
         return result
+    
+    async def translate(self, string: str) -> tuple[str, str]:
+        """
+        Translate the bopomofo string to Chinese.
+
+        :param string: The bopomofo string.
+        :type string: str
+
+        :return: A (text, source) pair of the best translation.
+        :rtype: tuple[str, str]
+        """
+        google_result = self.google_translate(string)
+        local_result = self.local_translate(string)
+        return best_translation([("Google", await google_result), ("Local", await local_result)])
+    
 
     @discord.message_command(
         name="精靈文翻譯",
@@ -175,29 +266,30 @@ IMPORTANT SAFETY INSTRUCTIONS:
         if result is None:
             # fetch result from local HMM model
             result = await self.translate(message.content)
+        else:
+            result = (result, "Cache")
 
-        if not result:
+        if not result[0]:
             await ctx.respond("無法翻譯此訊息，可能是拼字有誤。", view=UseAIUI(message, self.db, self.ai_translate))
             return
 
         embed = discord.Embed(
             title="精靈文翻譯",
-            description=result,
+            description=result[0],
             color=0x2B2D31,
             timestamp=message.created_at,
         )
         embed.set_author(
             name=message.author.name, icon_url=message.author.display_avatar.url
         )
-        if message.guild:
-            embed.set_footer(text=message.channel.name)
+        embed.set_footer(text=f"From: {result[1]}")
 
         await ctx.respond(
             embed=embed,
             view=UseAIUI(message, self.db, self.ai_translate),
         )
 
-        await self.db.insert_translate(message.content, result)
+        await self.db.insert_translate(message.content, result[0])
 
     @discord.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -219,29 +311,30 @@ IMPORTANT SAFETY INSTRUCTIONS:
             if result is None:
                 # fetch result from local HMM model
                 result = await self.translate(message.content)
+            else:
+                result = (result, "Cache")
 
-            if not result:
-                await message.reply("無法翻譯此訊息，可能是拼字有誤。")
+            if not result[0]:
+                await message.reply("無法翻譯此訊息，可能是拼字有誤。",view=UseAIUI(original_message, self.db, self.ai_translate))
                 return
 
             embed = discord.Embed(
                 title="精靈文翻譯",
-                description=result,
+                description=result[0],
                 color=0x2B2D31,
                 timestamp=message.created_at,
             )
             embed.set_author(
                 name=message.author.name, icon_url=message.author.display_avatar.url
             )
-            if message.guild:
-                embed.set_footer(text=message.author.name)
+            embed.set_footer(text=f"From: {result[1]}")
 
             await original_message.reply(
                 embed=embed,
                 view=UseAIUI(message, self.db, self.ai_translate),
             )
 
-            await self.db.insert_translate(message.content, result)
+            await self.db.insert_translate(message.content, result[0])
         else:
             # auto translate
             guess = await self.db.get_translate(message.content)
